@@ -19,13 +19,20 @@ export const Home = () => {
             placeholder="Dê um nome para o seu projeto"
             id="task"
             type="text"
+            list="task-suggestions"
           />
+          <datalist id="task-suggestions">
+            <option value="projeto 1" />
+          </datalist>
 
           <label htmlFor="minutesAmount">durante</label>
           <MinutesAmountInput
             placeholder="00"
             id="minutesAmount"
             type="number"
+            step={5}
+            min={5}
+            max={60}
           />
 
           <span>minutos.</span>
