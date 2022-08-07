@@ -17,10 +17,16 @@ interface NewCycleFormData {
 }
 
 export const Home = () => {
-  const { register, handleSubmit, watch } = useForm<NewCycleFormData>()
+  const { register, handleSubmit, watch, reset } = useForm<NewCycleFormData>({
+    defaultValues: {
+      task: '',
+      minutesAmount: 5,
+    },
+  })
 
   function handleCreateNewCycle(data: NewCycleFormData) {
     console.log(data)
+    reset()
   }
 
   const task = watch('task')
