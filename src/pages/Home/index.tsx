@@ -1,5 +1,6 @@
-import { Play } from 'phosphor-react'
-import { useForm } from 'react-hook-form'
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Play } from "phosphor-react";
 
 import {
   CountdownContainer,
@@ -9,28 +10,59 @@ import {
   Separator,
   StartCountdownButton,
   TaskInput,
-} from './styles'
+} from "./styles";
 
 interface NewCycleFormData {
-  task: string
-  minutesAmount: number
+  task: string;
+  minutesAmount: number;
+}
+
+interface Cycle {
+  id: string;
+  tasks: string;
+  minutesAmount: number;
 }
 
 export const Home = () => {
+  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
+  const [amountSecondsPassed, setAmountSecondsPassed] = useState(0);
+
   const { register, handleSubmit, watch, reset } = useForm<NewCycleFormData>({
     defaultValues: {
-      task: '',
-      minutesAmount: 5,
+      task: "",
+      minutesAmount: 0,
     },
-  })
+  });
 
   function handleCreateNewCycle(data: NewCycleFormData) {
-    console.log(data)
-    reset()
+    const id = String(new Date().getTime());
+
+    const newCycle: Cycle = {
+      id,
+      tasks: data.task,
+      minutesAmount: data.minutesAmount,
+    };
+
+    setCycles((state) => [...state, newCycle]);
+    setActiveCycleId(id);
+
+    reset();
   }
 
-  const task = watch('task')
-  const isSubmitDisabled = !task
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
+
+  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0;
+  const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0;
+
+  const minutesAmount = Math.floor(currentSeconds / 60);
+  const secondsAmount = currentSeconds % 60;
+
+  const minutes = String(minutesAmount).padStart(2, "0");
+  const seconds = String(secondsAmount).padStart(2, "0");
+
+  const task = watch("task");
+  const isSubmitDisabled = !task;
 
   return (
     <HomeContainer>
@@ -42,7 +74,7 @@ export const Home = () => {
             type="text"
             list="task-suggestions"
             placeholder="Dê um nome para o seu projeto"
-            {...register('task')}
+            {...register("task")}
           />
           <datalist id="task-suggestions">
             <option value="projeto 1" />
@@ -56,18 +88,18 @@ export const Home = () => {
             type="number"
             placeholder="00"
             id="minutesAmount"
-            {...register('minutesAmount', { valueAsNumber: true })}
+            {...register("minutesAmount", { valueAsNumber: true })}
           />
 
           <span>minutos.</span>
         </FormContainer>
 
         <CountdownContainer>
-          <span>0</span>
-          <span>0</span>
+          <span>{minutes[0]}</span>
+          <span>{minutes[1]}</span>
           <Separator>:</Separator>
-          <span>0</span>
-          <span>0</span>
+          <span>{seconds[0]}</span>
+          <span>{seconds[1]}</span>
         </CountdownContainer>
 
         <StartCountdownButton type="submit" disabled={isSubmitDisabled}>
@@ -76,5 +108,5 @@ export const Home = () => {
         </StartCountdownButton>
       </form>
     </HomeContainer>
-  )
-}
+  );
+};
