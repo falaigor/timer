@@ -20,7 +20,7 @@ interface NewCycleFormData {
 
 interface Cycle {
   id: string;
-  tasks: string;
+  task: string;
   minutesAmount: number;
   startDate: Date;
 }
@@ -40,13 +40,19 @@ export const Home = () => {
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
 
   useEffect(() => {
+    let interval: number;
+
     if (activeCycle) {
-      setInterval(() => {
+      interval = setInterval(() => {
         setAmountSecondsPassed(
           differenceInSeconds(new Date(), activeCycle.startDate)
         );
       }, 1000);
     }
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [activeCycle]);
 
   function handleCreateNewCycle(data: NewCycleFormData) {
@@ -54,13 +60,14 @@ export const Home = () => {
 
     const newCycle: Cycle = {
       id,
-      tasks: data.task,
+      task: data.task,
       minutesAmount: data.minutesAmount,
       startDate: new Date(),
     };
 
     setCycles((state) => [...state, newCycle]);
     setActiveCycleId(id);
+    setAmountSecondsPassed(0);
 
     reset();
   }
@@ -76,6 +83,12 @@ export const Home = () => {
 
   const task = watch("task");
   const isSubmitDisabled = !task;
+
+  useEffect(() => {
+    if (activeCycle) {
+      document.title = `${minutes}:${seconds} - ${activeCycle.task}`;
+    }
+  }, [minutes, seconds, task, activeCycle]);
 
   return (
     <HomeContainer>
