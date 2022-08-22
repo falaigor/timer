@@ -13,7 +13,6 @@ import {
   StopCountdownButton,
   TaskInput,
 } from "./styles";
-import { cy } from "date-fns/locale";
 
 interface NewCycleFormData {
   task: string;
@@ -26,6 +25,7 @@ interface Cycle {
   minutesAmount: number;
   startDate: Date;
   interruptedDate?: Date;
+  finishedDate?: Date;
 }
 
 export const Home = () => {
@@ -42,21 +42,16 @@ export const Home = () => {
 
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
 
-  useEffect(() => {
-    let interval: number;
+  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0;
+  const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0;
 
-    if (activeCycle) {
-      interval = setInterval(() => {
-        setAmountSecondsPassed(
-          differenceInSeconds(new Date(), activeCycle.startDate)
-        );
-      }, 1000);
-    }
+  const minutesAmount = Math.floor(currentSeconds / 60);
+  const secondsAmount = currentSeconds % 60;
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, [activeCycle]);
+  const minutes = String(minutesAmount).padStart(2, "0");
+  const seconds = String(secondsAmount).padStart(2, "0");
+
+  const task = watch("task");
 
   function handleCreateNewCycle(data: NewCycleFormData) {
     const id = String(new Date().getTime());
@@ -76,8 +71,8 @@ export const Home = () => {
   }
 
   function handleInterruptCycle() {
-    setCycles(
-      cycles.map((cycle) => {
+    setCycles((state) =>
+      state.map((cycle) => {
         if (cycle.id === activeCycleId) {
           return { ...cycle, interruptedDate: new Date() };
         } else {
@@ -89,16 +84,40 @@ export const Home = () => {
     setActiveCycleId(null);
   }
 
-  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0;
-  const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0;
+  useEffect(() => {
+    let interval: number;
 
-  const minutesAmount = Math.floor(currentSeconds / 60);
-  const secondsAmount = currentSeconds % 60;
+    if (activeCycle) {
+      interval = setInterval(() => {
+        const secondsDifference = differenceInSeconds(
+          new Date(),
+          activeCycle.startDate
+        );
 
-  const minutes = String(minutesAmount).padStart(2, "0");
-  const seconds = String(secondsAmount).padStart(2, "0");
+        if (secondsDifference >= totalSeconds) {
+          setCycles((state) =>
+            state.map((cycle) => {
+              if (cycle.id === activeCycleId) {
+                return { ...cycle, finishedDate: new Date() };
+              } else {
+                return cycle;
+              }
+            })
+          );
 
-  const task = watch("task");
+          clearInterval(interval);
+
+          setActiveCycleId(null);
+        } else {
+          setAmountSecondsPassed(secondsDifference);
+        }
+      }, 1000);
+    }
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [activeCycle, totalSeconds, activeCycleId]);
 
   useEffect(() => {
     if (activeCycle) {
